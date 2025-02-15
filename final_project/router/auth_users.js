@@ -68,38 +68,26 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   const review = req.query.review;
 
-  if(!books[isbn]) {
-    return res.status(404).json({message: "Book not found"});
-  }
-  if(!books[isbn].reviews) {
-    books[isbn].reviews = {};
-  }
-  if(books[isbn].reviews[username]) {
-    books[isbn].reviews[username] = review;
-    return res.json({message: `User ${username} Review ${books[isbn]} modified successfully`});
-  }
-  books[isbn].reviews[username] = review;
-  return res.json({message: "Review added successfully"});
+    if(books[isbn]) {
+        let book = books[isbn];
+        book.reviews[username] = review;
+        return res.status(200).send("Review successfully posted");
+    }
+    else {
+        return res.status(404).json({message: `ISBN ${isbn} not found`});
+    }
 });
 
 regd_users.delete("/auth/review/:isbn", (req, res) => {
-    const requestedIsbn = req.params.isbn;
-    const username = req.session.authorization.username; // Retrieve username from session
-
-    if (!username) {
-      return res.status(401).json({ message: "Unauthorized" }); // Handle unauthorized access
+    const isbn = req.params.isbn;
+    const username = req.session.authorization.username;
+    if (books[isbn]) {
+        let book = books[isbn];
+        delete book.reviews[username];
+        return res.status(200).send("Review successfully deleted");
     }
-
-    const book = books[requestedIsbn];
-
-    if(book) {
-      if(book.reviews[username]) { // Check if a review exists for the user
-        res.status(200).json({ message: "Review deleted successfully" });
-      }else{
-        res.status(404).json({ message: "Review not found" }); // Handle review not found
-      }
-    }else{
-      res.status(404).json({ message: "Book not found" }); // Handle book not found
+    else {
+        return res.status(404).json({message: `ISBN ${isbn} not found`});
     }
   });
 
